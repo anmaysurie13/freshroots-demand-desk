@@ -3,6 +3,8 @@
 A demand-planning tool for Freshroots, a packaged-snacks and staples distributor in Maharashtra and Goa.
 A planner exports five files from SAP twice a week. Rules raise the flags, an AI model explains each one, the planner accepts or changes every decision, and only reviewed decisions reach buying. Two kill switches stop the automation on their own if it stops being trustworthy.
 
+Live: https://freshroots-demand-desk-three.vercel.app
+
 ## How it works
 
 ```
