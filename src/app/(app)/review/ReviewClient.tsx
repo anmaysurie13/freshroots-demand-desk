@@ -187,7 +187,7 @@ export function ReviewClient({ data, role, killed }: { data: Data; role: string;
         </div>
       )}
 
-      <div style={{ display: "grid", gap: 12 }}>
+      <div style={{ display: "grid", gap: 12, gridTemplateColumns: "minmax(0, 1fr)" }}>
         {visible.length === 0 && counts.decided > 0 && (
           <div className="card" style={{ padding: 28, textAlign: "center" }}>
             <div style={{ fontWeight: 600 }}>Everything in this run is reviewed.</div>

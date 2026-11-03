@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Phase 1 end-to-end: upload -> validate -> run -> AI -> review -> orders, plus role checks.
 // Run against a server whose DATABASE_URL is a throwaway branch: npx tsx scripts/e2e-phase1.ts
 import dotenv from "dotenv";

@@ -58,8 +58,25 @@ export function OrdersClient({ rows, canPlace, killed }: { rows: Row[]; canPlace
     setBusy(null);
   }
 
+  /** Shared by the desktop table and the phone cards, so both behave the same. */
+  const controls = (r: Row) =>
+    r.status === "placed" ? null : (
+      <div style={{ display: "grid", gap: 8 }}>
+        <input className="input" placeholder="Order reference (optional)" maxLength={60} value={refs[r.id] ?? ""} onChange={(e) => setRefs((p) => ({ ...p, [r.id]: e.target.value }))} aria-label={`Order reference for ${r.skuId}`} />
+        {r.status === "held" && (
+          <label className="checkrow" style={{ minHeight: 0 }}>
+            <input type="checkbox" checked={confirm[r.id] === true} onChange={(e) => setConfirm((p) => ({ ...p, [r.id]: e.target.checked }))} />
+            <span style={{ fontSize: 12.5 }}>I confirmed with Raghav</span>
+          </label>
+        )}
+        <button className="btn btn-sm btn-primary" disabled={busy === r.id || (r.status === "held" && !confirm[r.id])} onClick={() => place(r)}>
+          {busy === r.id ? "Saving..." : "Mark placed"}
+        </button>
+      </div>
+    );
+
   return (
-    <div style={{ display: "grid", gap: 14 }}>
+    <div style={{ display: "grid", gap: 14, gridTemplateColumns: "minmax(0, 1fr)" }}>
       {held.length > 0 && (
         <div className="note note-clay" role="alert">
           <strong>Automation stopped. Confirm with Raghav before ordering.</strong> {held.length} item{held.length > 1 ? "s are" : " is"} held. They are not cancelled.
@@ -81,7 +98,38 @@ export function OrdersClient({ rows, canPlace, killed }: { rows: Row[]; canPlace
         ))}
       </div>
 
-      <section className="card">
+      <div className="orders-cards" style={{ gap: 12 }}>
+        {shown.length === 0 && <div className="card muted" style={{ padding: 24, textAlign: "center" }}>Nothing here.</div>}
+        {shown.map((r) => (
+          <article key={r.id} className="card" style={{ padding: 16, display: "grid", gap: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start" }}>
+              <div style={{ minWidth: 0 }}>
+                <div className="num" style={{ fontWeight: 600 }}>{r.skuId}</div>
+                <div className="faint" style={{ fontSize: 12 }}>{r.skuName}</div>
+              </div>
+              <Pill tone={r.status === "placed" ? "slate" : r.status === "held" ? "clay" : "amber"}>{r.status}</Pill>
+            </div>
+            <div className="well">
+              {r.action === "REORDER" ? (
+                <span className="num" style={{ fontSize: 18, fontWeight: 600 }}>Reorder {r.quantity.toLocaleString("en-IN")}</span>
+              ) : (
+                <>
+                  <span style={{ fontSize: 16, fontWeight: 600 }}>Hold the next order</span>
+                  <div className="faint" style={{ fontSize: 12 }}>Not a cancellation of an existing order</div>
+                </>
+              )}
+            </div>
+            <div className="faint" style={{ fontSize: 12 }}>
+              {r.source === "ai_accepted" ? "AI accepted" : "Raghav changed"}
+              {r.reasonCode && <> · {REASON_LABELS[r.reasonCode as keyof typeof REASON_LABELS] ?? r.reasonCode}</>} · run #{r.runId} · data age {ageDays(r.asOfDate, r.placedAt)} d
+              {r.orderRef && <> · {r.orderRef}</>}
+            </div>
+            {canPlace && controls(r)}
+          </article>
+        ))}
+      </div>
+
+      <section className="card orders-table">
         <div className="scroll-x">
           <table className="table">
             <thead>
@@ -130,24 +178,7 @@ export function OrdersClient({ rows, canPlace, killed }: { rows: Row[]; canPlace
                   </td>
                   <td className="num">#{r.runId}<div className="faint" style={{ fontSize: 12 }}>{r.asOfDate}</div></td>
                   <td className="num">{ageDays(r.asOfDate, r.placedAt)} d</td>
-                  {canPlace && (
-                    <td style={{ minWidth: 240 }}>
-                      {r.status === "placed" ? null : (
-                        <div style={{ display: "grid", gap: 8 }}>
-                          <input className="input" placeholder="Order reference (optional)" maxLength={60} value={refs[r.id] ?? ""} onChange={(e) => setRefs((p) => ({ ...p, [r.id]: e.target.value }))} aria-label={`Order reference for ${r.skuId}`} />
-                          {r.status === "held" && (
-                            <label className="checkrow" style={{ minHeight: 0 }}>
-                              <input type="checkbox" checked={confirm[r.id] === true} onChange={(e) => setConfirm((p) => ({ ...p, [r.id]: e.target.checked }))} />
-                              <span style={{ fontSize: 12.5 }}>I confirmed with Raghav</span>
-                            </label>
-                          )}
-                          <button className="btn btn-sm btn-primary" disabled={busy === r.id || (r.status === "held" && !confirm[r.id])} onClick={() => place(r)}>
-                            {busy === r.id ? "Saving..." : "Mark placed"}
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  )}
+                  {canPlace && <td style={{ minWidth: 240 }}>{controls(r)}</td>}
                 </tr>
               ))}
             </tbody>

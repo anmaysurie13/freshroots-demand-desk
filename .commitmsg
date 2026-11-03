@@ -1,0 +1,9 @@
+Phase 2: dashboard, loss entry, kill switches, audit and settings
+
+Dashboard with the outcome, quality and workflow metrics, SVG charts and run
+history; Priya's loss entry and metrics export; Kill 1 and Kill 2 evaluated
+after every review and loss entry (and daily by cron), with voiding, holding,
+banners, queued email, re-arm rules and alert acknowledgement; audit log and
+settings pages; mobile card layout for Orders; decisions document.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>

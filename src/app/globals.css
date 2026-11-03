@@ -81,6 +81,7 @@ a:hover {
 
 /* ---------------------------------------------------------------- surfaces */
 .card {
+  min-width: 0;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -534,6 +535,19 @@ a:hover {
   }
   .main-pad {
     padding-bottom: 88px !important;
+  }
+}
+
+/* Orders: a table on wide screens, cards on phones. */
+.orders-cards {
+  display: none;
+}
+@media (max-width: 760px) {
+  .orders-cards {
+    display: grid;
+  }
+  .orders-table {
+    display: none;
   }
 }
 
