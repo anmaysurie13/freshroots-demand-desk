@@ -43,8 +43,19 @@ The case leaves some things open. This is what the build does in each place, so 
 | # | Question | What this build does |
 |---|---|---|
 | 22 | AI provider | Gemini through OpenRouter (`google/gemini-3.8-flash`, chosen from OpenRouter's live model list on 2026-11-03). A `mock` provider exists for offline use. |
-| 23 | Sessions | A signed, httpOnly, sameSite=lax cookie (secure in production) with bcrypt passwords, instead of Auth.js. Role is re-read from the database on every request, so deactivating an account takes effect immediately. Failed sign-ins are limited per email and per IP. |
-| 24 | Accounts | One per role, seeded with placeholder `@freshroots.example` emails and random passwords. Real emails need confirming. |
+| 23 | Sign-in | None, by request. A role picker, allowed only while `OPEN_ACCESS_DEMO` is exactly `true`; otherwise nobody can start a session. While it is on, anyone with the link can act as any role. A session is a signed, httpOnly cookie, and the role is re-read from the database on every request. |
+| 24 | Accounts | One per role, seeded with placeholder `@freshroots.example` emails and no passwords. The picker uses the first active account of each role. Real emails need confirming. |
 | 25 | Cron | One daily call to `/api/cron/kill2`, protected by `CRON_SECRET`. |
 | 26 | CI | The workflow is in `docs/ci-workflow.yml`. Move it to `.github/workflows/ci.yml` once the GitHub login has the `workflow` scope. |
 | 27 | Database branches | Production uses the Neon `production` branch. Development and the end-to-end scripts use a separate `dev` branch. |
+
+## HubSpot (replaces the Zoho placeholder)
+
+| # | Question | What this build does |
+|---|---|---|
+| 28 | What does HubSpot do with a buying decision? | HubSpot has no purchase orders or inventory, so each pending decision becomes one **deal**. Procurement triggers it with a button; it is never automatic. Held, placed and already-sent decisions are skipped. |
+| 29 | Duplicate deals | HubSpot documents no idempotency key. Each decision is claimed atomically before the call and keeps its deal id, so two clicks at once, or a retry after a failure, cannot create two deals. A failed call releases the claim so it can be retried. |
+| 30 | Which deal fields | Only documented ones: `dealname` (the action, SKU and run) and, when configured, `pipeline` and `dealstage`. No `amount`, because the data has no prices. No custom or `description` property, because HubSpot's docs do not confirm `description` exists on deals. |
+| 31 | Things HubSpot's docs do not state | The exact scope name for creating deals, and what happens when `dealstage` is omitted (only the pipeline default is documented). If HubSpot rejects deals without a stage, set `HUBSPOT_DEAL_STAGE`. The error HubSpot returns is shown to procurement. |
+| 32 | Token | HubSpot's docs say legacy private apps cannot be created after 26 October 2026, so a new token may need to come from their developer platform. Any bearer access token with permission to create deals works. |
+| 33 | Tested against | A local mock of HubSpot's documented API, not a live HubSpot account. |

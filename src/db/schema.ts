@@ -25,23 +25,10 @@ export const users = pgTable(
     name: text("name").notNull(),
     email: text("email").notNull(),
     role: text("role").$type<Role>().notNull(),
-    passwordHash: text("password_hash").notNull(),
     active: boolean("active").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex("users_email_uq").on(sql`lower(${t.email})`)],
-);
-
-export const loginAttempts = pgTable(
-  "login_attempts",
-  {
-    id: bigserial("id", { mode: "number" }).primaryKey(),
-    email: text("email").notNull(),
-    ip: text("ip").notNull(),
-    success: boolean("success").notNull(),
-    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => [index("login_attempts_email_idx").on(t.email, t.at), index("login_attempts_ip_idx").on(t.ip, t.at)],
 );
 
 export const dataSnapshots = pgTable("data_snapshots", {

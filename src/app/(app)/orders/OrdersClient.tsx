@@ -20,6 +20,8 @@ interface Row {
   createdAt: string;
   placedAt: string | null;
   orderRef: string | null;
+  sink: string;
+  sinkRef: string | null;
 }
 
 function ageDays(asOf: string, at: string | null): number {
@@ -28,17 +30,21 @@ function ageDays(asOf: string, at: string | null): number {
   return Math.max(0, Math.round((to - from) / 86_400_000));
 }
 
-export function OrdersClient({ rows, canPlace, killed }: { rows: Row[]; canPlace: boolean; killed: boolean }) {
+export function OrdersClient({ rows, canPlace, killed, hubspot }: { rows: Row[]; canPlace: boolean; killed: boolean; hubspot: boolean }) {
   const router = useRouter();
   const [tab, setTab] = useState<"open" | "placed" | "all">("open");
   const [refs, setRefs] = useState<Record<number, string>>({});
   const [confirm, setConfirm] = useState<Record<number, boolean>>({});
   const [busy, setBusy] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [hsBusy, setHsBusy] = useState(false);
+  const [hsMsg, setHsMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
 
   const open = rows.filter((r) => r.status !== "placed");
   const held = rows.filter((r) => r.status === "held");
-  const shown = useMemo(() => (tab === "open" ? open : tab === "placed" ? rows.filter((r) => r.status === "placed") : rows), [rows, tab, open]);
+  const filtered = useMemo(() => (tab === "open" ? open : tab === "placed" ? rows.filter((r) => r.status === "placed") : rows), [rows, tab, open]);
+  const LIMIT = 200;
+  const shown = filtered.slice(0, LIMIT);
 
   async function place(r: Row) {
     setBusy(r.id);
@@ -57,6 +63,26 @@ export function OrdersClient({ rows, canPlace, killed }: { rows: Row[]; canPlace
     }
     setBusy(null);
   }
+
+  const unsent = rows.filter((r) => r.status === "pending" && !r.sinkRef);
+
+  async function sendHubSpot() {
+    setHsBusy(true);
+    setHsMsg(null);
+    try {
+      const res = await fetch("/api/orders/hubspot", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error ?? "Could not reach HubSpot.");
+      const firstErr = (j.results as { ok: boolean; error?: string }[]).find((x) => !x.ok)?.error;
+      setHsMsg({ kind: j.failed ? "err" : "ok", text: `${j.sent} deal${j.sent === 1 ? "" : "s"} created in HubSpot${j.failed ? `, ${j.failed} failed. ${firstErr ?? ""}` : "."}` });
+      router.refresh();
+    } catch (e) {
+      setHsMsg({ kind: "err", text: e instanceof Error ? e.message : "Failed." });
+    }
+    setHsBusy(false);
+  }
+
+  const dealRef = (r: Row) => (r.sink === "hubspot" && r.sinkRef && r.sinkRef !== "sending" ? <div className="faint num" style={{ fontSize: 12 }}>HubSpot deal {r.sinkRef}</div> : null);
 
   /** Shared by the desktop table and the phone cards, so both behave the same. */
   const controls = (r: Row) =>
@@ -98,6 +124,8 @@ export function OrdersClient({ rows, canPlace, killed }: { rows: Row[]; canPlace
         ))}
       </div>
 
+      {filtered.length > LIMIT && <div className="faint" style={{ fontSize: 12 }}>Showing the latest {LIMIT} of {filtered.length}. Export the CSV for everything.</div>}
+
       <div className="orders-cards" style={{ gap: 12 }}>
         {shown.length === 0 && <div className="card muted" style={{ padding: 24, textAlign: "center" }}>Nothing here.</div>}
         {shown.map((r) => (
@@ -124,6 +152,7 @@ export function OrdersClient({ rows, canPlace, killed }: { rows: Row[]; canPlace
               {r.reasonCode && <> · {REASON_LABELS[r.reasonCode as keyof typeof REASON_LABELS] ?? r.reasonCode}</>} · run #{r.runId} · data age {ageDays(r.asOfDate, r.placedAt)} d
               {r.orderRef && <> · {r.orderRef}</>}
             </div>
+            {dealRef(r)}
             {canPlace && controls(r)}
           </article>
         ))}
@@ -174,6 +203,7 @@ export function OrdersClient({ rows, canPlace, killed }: { rows: Row[]; canPlace
                   <td>
                     <Pill tone={r.status === "placed" ? "slate" : r.status === "held" ? "clay" : "amber"}>{r.status}</Pill>
                     {r.orderRef && <div className="faint num" style={{ fontSize: 12, marginTop: 4 }}>{r.orderRef}</div>}
+                    {dealRef(r)}
                     {r.placedAt && <div className="faint" style={{ fontSize: 12 }}>{fmtDateTime(r.placedAt)}</div>}
                   </td>
                   <td className="num">#{r.runId}<div className="faint" style={{ fontSize: 12 }}>{r.asOfDate}</div></td>
@@ -184,6 +214,25 @@ export function OrdersClient({ rows, canPlace, killed }: { rows: Row[]; canPlace
             </tbody>
           </table>
         </div>
+      </section>
+      <section className="card" style={{ padding: 18, display: "grid", gap: 12 }}>
+        <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap", justifyContent: "space-between" }}>
+          <div>
+            <div className="card-title">HubSpot</div>
+            <div className="muted" style={{ fontSize: 13 }}>Each pending decision becomes one HubSpot deal for procurement to work from. Nothing is sent unless you click, and a decision can only ever create one deal.</div>
+          </div>
+          <Pill tone={hubspot ? "lime" : "slate"}>{hubspot ? "Connected" : "Not connected"}</Pill>
+        </div>
+        {hsMsg && <div className={`note ${hsMsg.kind === "ok" ? "note-lime" : "note-clay"}`} role={hsMsg.kind === "err" ? "alert" : "status"}>{hsMsg.text}</div>}
+        {!hubspot && <div className="note">HubSpot is not connected for this deployment. Orders can still be exported as CSV.</div>}
+        {canPlace && hubspot && (
+          <div>
+            <button className="btn btn-primary" disabled={hsBusy || unsent.length === 0 || killed} onClick={sendHubSpot}>
+              {hsBusy ? "Sending..." : `Send ${unsent.length} to HubSpot`}
+            </button>
+            {killed && <span className="muted" style={{ marginLeft: 12 }}>Disabled: automation stopped.</span>}
+          </div>
+        )}
       </section>
       {killed && !held.length && <div className="faint" style={{ fontSize: 12 }}>Automation is stopped. Items already placed are unaffected.</div>}
     </div>

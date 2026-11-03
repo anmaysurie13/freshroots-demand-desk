@@ -16,7 +16,7 @@ const ROLES = ["raghav", "procurement", "priya", "deepa", "ceo", "admin"];
 
 export function UsersClient({ users, meId }: { users: U[]; meId: number }) {
   const router = useRouter();
-  const [form, setForm] = useState({ name: "", email: "", role: "procurement", password: "" });
+  const [form, setForm] = useState({ name: "", email: "", role: "procurement" });
   const [busy, setBusy] = useState<number | "new" | null>(null);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
 
@@ -28,8 +28,8 @@ export function UsersClient({ users, meId }: { users: U[]; meId: number }) {
       const res = await fetch("/api/users", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error ?? "Could not create the account.");
-      setMsg({ kind: "ok", text: "Account created. Share the password with the person directly." });
-      setForm({ name: "", email: "", role: "procurement", password: "" });
+      setMsg({ kind: "ok", text: "Account created. The role picker uses the first active account of each role." });
+      setForm({ name: "", email: "", role: "procurement" });
       router.refresh();
     } catch (err) {
       setMsg({ kind: "err", text: err instanceof Error ? err.message : "Failed." });
@@ -87,7 +87,6 @@ export function UsersClient({ users, meId }: { users: U[]; meId: number }) {
               {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
             </select>
           </div>
-          <div className="field"><label className="label" htmlFor="up">Temporary password (12+ characters)</label><input id="up" className="input" type="password" autoComplete="new-password" minLength={12} required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} /></div>
           {msg && <div className={`note ${msg.kind === "ok" ? "note-lime" : "note-clay"}`} role={msg.kind === "err" ? "alert" : "status"}>{msg.text}</div>}
           <button className="btn btn-primary" type="submit" disabled={busy === "new"}>{busy === "new" ? "Creating..." : "Create account"}</button>
         </form>

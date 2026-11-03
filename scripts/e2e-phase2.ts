@@ -265,22 +265,24 @@ async function main() {
   resp = await deepa.call("GET", "/api/metrics/export");
   check("deepa cannot export metrics (403)", resp.status === 403);
 
-  section("Users");
-  resp = await deepa.call("POST", "/api/users", { name: "X Y", email: "x@y.example", role: "ceo", password: "long-enough-password" });
+  section("Users and open access");
+  resp = await deepa.call("POST", "/api/users", { name: "X Y", email: "x@y.example", role: "ceo" });
   check("only admin can create accounts (403)", resp.status === 403);
   const stamp = Date.now();
-  resp = await admin.call("POST", "/api/users", { name: "Temp User", email: `temp${stamp}@freshroots.example`, role: "procurement", password: "a-long-temp-password-1" });
-  check("admin creates an account", resp.status === 200, resp.json);
+  resp = await admin.call("POST", "/api/users", { name: "Temp User", email: `temp${stamp}@freshroots.example`, role: "procurement" });
+  check("admin creates an account with no password", resp.status === 200, resp.json);
   resp = await admin.call("PATCH", `/api/users/${resp.json.id}`, { active: false });
   check("admin deactivates it", resp.status === 200);
-  resp = await new Session("raghav").call("POST", "/api/auth/login", { email: `temp${stamp}@freshroots.example`, password: "a-long-temp-password-1" });
-  check("a deactivated account cannot sign in", resp.status === 401);
-  const wrong = await fetch(`${BASE}/api/auth/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: "raghav@freshroots.example", password: "wrong" }) });
-  check("a wrong password is refused (401)", wrong.status === 401);
+  const badRole = await fetch(`${BASE}/api/auth/role`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ role: "superuser" }) });
+  check("an unknown role is refused (400)", badRole.status === 400);
+  const oldLogin = await fetch(`${BASE}/api/auth/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: "raghav@freshroots.example", password: "anything" }) });
+  check("the old password endpoint no longer exists (404)", oldLogin.status === 404, oldLogin.status);
+  const page = await (await fetch(`${BASE}/login`)).text();
+  check("the sign-in page has no password field", !page.includes('type="password"') && page.includes("Choose a role"));
 
   section("Audit trail covers every state change");
   const actions = new Set((await db.select({ a: schema.auditLog.action }).from(schema.auditLog)).map((x) => x.a));
-  for (const a of ["run.created", "run.ai_done", "review.saved", "order.placed", "loss.entered", "loss.edited", "kill1.fired", "kill1.rearmed", "kill2.alert", "kill2.fired", "kill2.rearmed", "kill2.alert_acknowledged", "kill2.cleared", "user.created", "user.deactivated", "metrics.exported"]) {
+  for (const a of ["run.created", "run.ai_done", "review.saved", "order.placed", "loss.entered", "loss.edited", "kill1.fired", "kill1.rearmed", "kill2.alert", "kill2.fired", "kill2.rearmed", "kill2.alert_acknowledged", "kill2.cleared", "user.created", "user.deactivated", "auth.role_selected", "metrics.exported"]) {
     check(`audit has ${a}`, actions.has(a));
   }
 
