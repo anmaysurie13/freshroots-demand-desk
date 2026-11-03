@@ -1,28 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// Shared helpers for the end-to-end scripts. Talks to a running server over HTTP; reads accounts from the git-ignored credentials file.
-import fs from "node:fs";
+// Shared helpers for the end-to-end scripts. Talks to a running server over HTTP.
 
 export const BASE = process.env.E2E_BASE ?? "http://localhost:3000";
 
 export type Role = "raghav" | "procurement" | "priya" | "deepa" | "ceo" | "admin";
 
-function credentials(): Record<string, { email: string; password: string }> {
-  const out: Record<string, { email: string; password: string }> = {};
-  for (const line of fs.readFileSync(".seed-credentials.txt", "utf8").split("\n")) {
-    const [role, email, password] = line.trim().split(/\s+/);
-    if (role && email && password) out[role] = { email, password };
-  }
-  return out;
-}
-
 export class Session {
   cookie = "";
   constructor(public role: Role) {}
 
+  /** Open-access demo: picks the role. There are no passwords. */
   async login() {
-    const c = credentials()[this.role];
-    const res = await fetch(`${BASE}/api/auth/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: c.email, password: c.password }) });
-    if (!res.ok) throw new Error(`login failed for ${this.role}: ${res.status}`);
+    const res = await fetch(`${BASE}/api/auth/role`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ role: this.role }) });
+    if (!res.ok) throw new Error(`role selection failed for ${this.role}: ${res.status}`);
     this.cookie = (res.headers.getSetCookie?.() ?? []).map((x) => x.split(";")[0]).join("; ");
     return this;
   }

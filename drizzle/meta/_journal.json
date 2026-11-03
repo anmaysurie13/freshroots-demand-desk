@@ -8,6 +8,13 @@
       "when": 1793682926701,
       "tag": "0000_chemical_lester",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793688220455,
+      "tag": "0001_chubby_shocker",
+      "breakpoints": true
     }
   ]
 }

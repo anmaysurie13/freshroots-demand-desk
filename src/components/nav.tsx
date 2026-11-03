@@ -65,7 +65,7 @@ export function LogoutButton({ compact = false }: { compact?: boolean }) {
       }}
     >
       <IconLogout />
-      {compact ? <span className="sr-only">Sign out</span> : "Sign out"}
+      {compact ? <span className="sr-only">Switch role</span> : "Switch role"}
     </button>
   );
 }

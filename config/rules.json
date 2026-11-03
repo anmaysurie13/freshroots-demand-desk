@@ -1,16 +1,24 @@
 {
-  "version": "1.0.0",
+  "version": "1.0.1",
   "forecast": {
     "recentWeeks": 4,
     "averageWeeks": 12,
     "minWeeksHistory": 12,
     "highDemandPct": 20,
     "highDemandMultiplier": 1.5,
-    "stockoutMultiplier": 1.0,
+    "stockoutMultiplier": 1,
     "festivalUpliftPct": 25,
-    "normalCover": { "min": 6, "max": 14 },
-    "perishableLevels": ["High"],
-    "perishableCover": { "min": 3, "max": 4 },
+    "normalCover": {
+      "min": 6,
+      "max": 14
+    },
+    "perishableLevels": [
+      "High"
+    ],
+    "perishableCover": {
+      "min": 3,
+      "max": 4
+    },
     "swingPct": 50
   },
   "ai": {
@@ -48,11 +56,6 @@
     "stockVsPeakWarnMultiple": 15,
     "maxFileBytes": 1048576,
     "maxRowsPerFile": 500000
-  },
-  "login": {
-    "maxFailedPerEmail": 5,
-    "maxFailedPerIp": 20,
-    "windowMinutes": 15
   },
   "timezone": "Asia/Kolkata"
 }
