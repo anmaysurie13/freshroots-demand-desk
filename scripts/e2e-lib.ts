@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Shared helpers for the end-to-end scripts. Talks to a running server over HTTP; reads accounts from the git-ignored credentials file.
 import fs from "node:fs";
 
