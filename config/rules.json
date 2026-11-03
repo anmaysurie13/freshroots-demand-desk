@@ -1,0 +1,58 @@
+{
+  "version": "1.0.0",
+  "forecast": {
+    "recentWeeks": 4,
+    "averageWeeks": 12,
+    "minWeeksHistory": 12,
+    "highDemandPct": 20,
+    "highDemandMultiplier": 1.5,
+    "stockoutMultiplier": 1.0,
+    "festivalUpliftPct": 25,
+    "normalCover": { "min": 6, "max": 14 },
+    "perishableLevels": ["High"],
+    "perishableCover": { "min": 3, "max": 4 },
+    "swingPct": 50
+  },
+  "ai": {
+    "provider": "openrouter",
+    "temperature": 0,
+    "deviationPolicy": "none",
+    "boundedDeviationPct": 0,
+    "maxRetries": 2,
+    "timeoutSeconds": 30,
+    "concurrency": 5,
+    "stepBudgetSeconds": 200,
+    "retryDelayMs": 500,
+    "fallbackWarningPct": 30
+  },
+  "kill1": {
+    "enabled": true,
+    "minReviewed": 30,
+    "thresholdPct": 10
+  },
+  "kill2": {
+    "enabled": true,
+    "alertAbove": 2800000,
+    "killAbove": 3400000
+  },
+  "baselinePerQuarter": {
+    "stockoutLow": 1800000,
+    "stockoutHigh": 2200000,
+    "overstockLow": 1000000,
+    "overstockHigh": 1200000,
+    "totalLow": 2800000,
+    "totalHigh": 3400000
+  },
+  "data": {
+    "maxInventoryAgeDays": 7,
+    "stockVsPeakWarnMultiple": 15,
+    "maxFileBytes": 1048576,
+    "maxRowsPerFile": 500000
+  },
+  "login": {
+    "maxFailedPerEmail": 5,
+    "maxFailedPerIp": 20,
+    "windowMinutes": 15
+  },
+  "timezone": "Asia/Kolkata"
+}
