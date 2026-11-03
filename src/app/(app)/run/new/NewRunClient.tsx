@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IconArrow, IconCheck } from "@/components/icons";
 
 type FileKey = "sales" | "inventory" | "sku" | "distributor" | "calendar";
@@ -44,6 +44,12 @@ export function NewRunClient({ killed, hasPrevious }: { killed: boolean; hasPrev
   const [step, setStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const inputs = useRef<Partial<Record<FileKey, HTMLInputElement | null>>>({});
+  const reportRef = useRef<HTMLElement | null>(null);
+
+  // After validating, bring the report (and the Start run button under it) into view.
+  useEffect(() => {
+    if (report) reportRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [report]);
 
   const hasInput = sample || Object.keys(files).length > 0;
   const hasErrors = (report?.errors.length ?? 0) > 0;
@@ -187,7 +193,7 @@ export function NewRunClient({ killed, hasPrevious }: { killed: boolean; hasPrev
         )}
 
         {report && (
-          <section className="card">
+          <section className="card" ref={reportRef}>
             <div className="card-head">
               <div className="card-title">2. Validation report</div>
               <div style={{ display: "flex", gap: 8 }}>
@@ -217,6 +223,9 @@ export function NewRunClient({ killed, hasPrevious }: { killed: boolean; hasPrev
                   {busy === "run" ? "Running..." : "Start run"} <IconArrow />
                 </button>
                 {killed && <span className="muted" style={{ marginLeft: 12 }}>Disabled: automation stopped.</span>}
+                {!killed && !hasErrors && hasWarnings && !ack && busy === null && (
+                  <span style={{ marginLeft: 12, color: "var(--amber)" }}>Tick the box above to enable Start run.</span>
+                )}
               </div>
             </div>
           </section>
@@ -227,13 +236,18 @@ export function NewRunClient({ killed, hasPrevious }: { killed: boolean; hasPrev
         <div className="card-title" style={{ marginBottom: 16 }}>Run pipeline</div>
         <ol className="tracker">
           {STEPS.map((s, i) => {
-            const state = i < step ? "done" : i === step && (busy !== null || step > 0) ? "active" : "";
+            // "Active" means work is happening. A step that is merely next shows what you need to do instead.
+            const working = (busy === "run" && i === step) || (busy === "validate" && i === 1);
+            const state = i < step ? "done" : working ? "active" : "";
+            const isNext = busy === null && i === step && !!report;
+            const nextHint = hasErrors ? "Fix the errors, then validate again" : hasWarnings && !ack ? "Tick the warnings box, then press Start run" : "Press Start run to continue";
             return (
               <li key={s} className={state}>
                 <span className="tdot">{state === "done" ? <IconCheck /> : i + 1}</span>
                 <div style={{ paddingTop: 2 }}>
                   <div style={{ fontWeight: 600, color: state ? "var(--text)" : "var(--faint)" }}>{s}</div>
-                  {state === "active" && busy === "run" && <div className="faint" style={{ fontSize: 12 }}>Working...</div>}
+                  {state === "active" && <div className="faint" style={{ fontSize: 12 }}>Working...</div>}
+                  {isNext && <div style={{ fontSize: 12, color: "var(--amber)" }}>{nextHint}</div>}
                 </div>
               </li>
             );

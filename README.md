@@ -32,7 +32,7 @@ npm run dev
 ```
 
 Checks: `npm test`, `npm run lint`, `npm run typecheck`, `npm run secret-scan`.
-End-to-end scripts (`scripts/e2e-phase1.ts`, `e2e-phase2.ts`, `e2e-phase3.ts`) drive a running server over HTTP; point them at a throwaway database branch, never production. The HubSpot script runs against a local mock of HubSpot's API.
+End-to-end scripts (`scripts/e2e-phase1.ts`, `e2e-phase2.ts`, `e2e-phase3.ts`) drive a running server over HTTP; point them at a throwaway database branch, never production. The HubSpot script runs against a local mock of HubSpot's API. `scripts/ui-newrun.mjs` clicks through the New Run screen in a real browser.
 
 ## Access
 

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // Phase 2 end-to-end: loss entry, both kill switches at their boundaries, what a kill does, re-arm rules, cron, audit.
 // Run against a server on a THROWAWAY database branch: npx tsx scripts/e2e-phase2.ts
 import dotenv from "dotenv";
