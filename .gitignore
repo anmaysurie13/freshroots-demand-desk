@@ -45,3 +45,4 @@ next-env.d.ts
 .env.prod-db
 .env.production.local.bak
 .seed-credentials.txt
+.commitmsg
