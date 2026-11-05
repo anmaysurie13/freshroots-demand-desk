@@ -232,6 +232,16 @@ export async function getDashboard() {
     })
     .from(schema.aiDecisions);
 
+  // Box #9 of the component map: AI flags issued and reversed, cumulative since go-live (fallbacks are rule-engine, not AI).
+  const [rev] = await db
+    .select({
+      reviewed: sql<number>`count(*)`.mapWith(Number),
+      reversed: sql<number>`count(*) filter (where ${schema.reviews.isReversal})`.mapWith(Number),
+    })
+    .from(schema.aiDecisions)
+    .innerJoin(schema.reviews, eq(schema.reviews.aiDecisionId, schema.aiDecisions.id))
+    .where(eq(schema.aiDecisions.isFallback, false));
+
   const placed = await db
     .select({ placedAt: schema.buyingDecisions.placedAt, createdAt: schema.buyingDecisions.createdAt, asOf: schema.runs.asOfDate })
     .from(schema.buyingDecisions)
@@ -269,6 +279,9 @@ export async function getDashboard() {
       fallbackRatePct: allDec.total ? (allDec.fallback / allDec.total) * 100 : null,
       needsJudgmentPct: allDec.total ? (allDec.nj / allDec.total) * 100 : null,
       decisions: allDec.total,
+      aiIssued: allDec.total - allDec.fallback,
+      aiReviewed: rev.reviewed,
+      aiReversed: rev.reversed,
     },
     workflow: {
       dataAgeDays: avg(ages),

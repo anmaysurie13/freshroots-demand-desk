@@ -141,6 +141,16 @@ export default async function DashboardPage() {
       </div>
 
       <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", marginBottom: 20 }}>
+        <Kpi
+          label="AI flags issued"
+          value={String(d.quality.aiIssued)}
+          note={
+            <>
+              {d.quality.aiReviewed} reviewed · {d.quality.aiReversed} reversed
+              <Def text="All AI flag decisions since go-live (rule-engine fallbacks are not counted), how many Raghav has reviewed, and how many he reversed by changing the action or quantity." />
+            </>
+          }
+        />
         <Kpi label="AI fallback rate" value={pct(d.quality.fallbackRatePct)} note={<>Warn above {rulesConfig.ai.fallbackWarningPct}% in a run<Def text="Fallback decisions divided by all decisions." /></>} />
         <Kpi label="Needs-judgment share" value={pct(d.quality.needsJudgmentPct)} note={<>Proxy for the cases rules cannot cover<Def text="Decisions marked needs-judgment divided by all decisions." /></>} />
         <Kpi label="Review turnaround" value={hours(d.workflow.reviewTurnaroundHours)} note="Run created to last review" />

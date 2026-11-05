@@ -63,7 +63,7 @@ console.log("\nSample data: validate, then start");
 console.log("\nReal files (stale inventory): errors block");
 {
   const { ctx, page } = await raghav();
-  const dir = "seed/";
+  const dir = process.env.FILES_DIR ?? "seed/";
   const map = { sales: "weekly_sales.csv", inventory: "current_inventory.csv", sku: "sku_master.csv", distributor: "distributor_master.csv", calendar: "calendar.csv" };
   const inputs = page.locator("input[type=file]");
   const order = ["sales", "inventory", "sku", "distributor", "calendar"];
